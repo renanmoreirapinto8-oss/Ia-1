@@ -2,13 +2,13 @@ import tkinter as tk
 import random
 janela = tk.Tk()
 janela.title("Area 1")
-janela.geometry("800x600")
+janela.geometry("1100x900")
 canvas = tk.Canvas(janela, bg="white")
 canvas.pack(fill=tk.BOTH, expand=True)
 area_x1 = 100
 area_y1 = 100
-area_x2 = 700
-area_y2 = 500
+area_x2 = 800
+area_y2 = 600
 width = 3 
 canvas.create_rectangle(area_x1, area_y1, area_x2, area_y2, outline="black", width=3)
 tamanho = 300
@@ -31,7 +31,7 @@ class C1:
         self.agressividade = 0
         self.medo = 0
         self.canvas = canvas
-        self.tamanho = 30
+        self.tamanho = 50
         self.objeto = canvas.create_oval(
             x - self.tamanho /2,
             y - self.tamanho /2,
@@ -60,27 +60,61 @@ class C1:
             self.velocidade_y = abs(self.velocidade_y)
         elif self.y + self.tamanho /2 >= area_y2:
             self.velocidade_y = -abs(self.velocidade_y)
+    def lembrar_perigo(self,x,y):
+        self.memoria_perigo.append({
+            "x": x,
+            "y": y,
+            "dano": 5,
+            "medo": 15
+        })
+        posicao = (x,y)
+        if posicao not in self.memoria_perigo:
+            self.memoria_perigo.append(posicao)
+    def lembrar_presa(self,x,y):
+        self.memoria_presa.append({
+            "x": x,
+            "y": y
+        })
+        posicao = (x,y)
+        if posicao not in self.memoria_presa:
+            self.memoria_presa.append(posicao)
+    def verificar_memoria_perigo(self):
+        for x,y in self.memoria_perigo:
+            self.distancia_ate(ameaca) == (
+                (x - self.x) ** 2 +
+                (y - self.y) ** 2
+            ) ** 0.5
+            if self.distancia_ate(ameaca) < 50:
+                self.estado = "fugindo"
+    def interagir(self):
+        if self.distancia_ate(ameaca) <20:
+            self.vida -= 5
+            self.medo += 15
+            self.lembrar_perigo(
+                ameaca.x,
+                ameaca.y
+            )
+        if self.distancia_ate(comida) <30:
+            self.fome = 100
+            self.vida += 5
+            self.lembrar_presa(
+                comida.x,
+                comida.y
+            )
     def detectar_ameaca(self):
         if self.distancia_ate(ameaca) <100:
             self.perigo = ameaca
-        if self.distancia_ate(ameaca) <20:
-            self.vida -= 5
+
     def detectar_comida(self):
         if self.distancia_ate(comida) < 150:
             self.alvo = comida
-        if self.distancia_ate(comida) <30:
-            self.fome = 100
-        if self.distancia_ate(comida) <30:
-            self.vida += 5
-    def atualizar_medo(self):
 
+    def atualizar_medo(self):
         if self.medo < 0 :
             self.medo = 0
-        self.medo =((100 - self.vida) // 5) * 5
-
-
-    
-    
+        if self.medo > 0:
+            self.medo -= 0.01
+ 
     def atualizar_fome(self):
         self.fome -= 0.01
         self.velocidade = self.velocidade_base
@@ -88,6 +122,11 @@ class C1:
             self.fome = 0
         if self.fome <= 35:
             self.vida -= 0.1
+    def atualizar_agressividade(self):
+        self.agressividade = (
+            (100 - self.vida) +
+            (100 - self.vida)
+        ) / 2
     def explorando(self):
         if random.randint(1,20) == 1:
             self.velocidade_x = random.randint(-5,5)
@@ -107,7 +146,7 @@ class C1:
         print("perigo")
         distancia_ameaca = (
             (ameaca.x - self.x) ** 2 +
-            (ameaca.y - self.x) ** 2
+            (ameaca.y - self.y) ** 2
         ) ** 0.5
         if distancia_ameaca < 100:
             self.achar_perigo = ameaca
@@ -139,13 +178,9 @@ class C1:
             self.velocidade_y = self.velocidade
         else: self.velocidade_y = -self.velocidade        
     def atualizar_cacando(self):
-        if self.fome <= 40:
-            self.cacando()
         if self.fome >= 75:
             self.explorando()
     def atualizar_fuga(self):
-        if self.medo >= 40:
-            self.fugindo()
         if self.medo <= 20:
             self.explorando()
     def estados(self):
@@ -170,25 +205,26 @@ class C1:
         if self.vida <=0:
             self.canvas.delete(self.objeto)
             return
-        print(self.vida)
-        print(self.medo)
-        print(self.fome)
-        self.atualizar_fome()
-        print("observar")
+        self.movimentacao()
+        self.colisao()
+        self.interagir()
         self.observar(comida,ameaca)
-        print("fugindo")
+        self.decidir()
+        self.atualizar_fome()
+        self.detectar_comida()
         self.atualizar_fuga()
         self.atualizar_medo()
-        print("decidir")
-        self.decidir()
-        print("movendo")
-        self.movimentacao()
-        print("perigo")
+        self.atualizar_agressividade()
         self.detectar_ameaca()
-        print("detectar comida")
-        self.detectar_comida()
-        self.colisao()
+        print(self.memoria_presa)
+        print(self.memoria_perigo)
+        print(self.vida)
+        print(self.fome)
+        print(self.medo)
+        print(self.agressividade)
         janela.after(20, self.atualizar)
+
+
 class presa:
     def __init__(self, canvas, x, y):
         self.x = x
@@ -199,7 +235,7 @@ class presa:
         self.velocidade = 5
         self.velocidade_base = self.velocidade
         self.movendo =  True
-        self.tamanho = 30
+        self.tamanho = 40
         self.canvas = canvas
         self.objeto = canvas.create_oval(
             x - self.tamanho /2,
@@ -276,7 +312,7 @@ class ostil:
         self.velocidade = 7
         self.velocidade_base = self.velocidade
         self.movendo =  True
-        self.tamanho = 30
+        self.tamanho = 40
         self.canvas = canvas
         self.objeto = canvas.create_oval(
             x - self.tamanho /2,
@@ -336,10 +372,8 @@ ia = C1(canvas, 400, 300)
 comida = presa(canvas,200,200)
 ameaca = ostil(canvas,200,200)
 ia.atualizar()
-
 comida.atualizar()
 ameaca.atualizar()
-
 janela.mainloop()
 
 

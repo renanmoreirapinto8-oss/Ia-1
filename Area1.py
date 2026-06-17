@@ -67,8 +67,7 @@ class C1:
         self.memoria_perigo.append({
             "x": x,
             "y": y,
-            "dano": 5,
-            "medo": 15
+            "forca": 100
         })
         posicao = (x,y)
         if posicao not in self.memoria_perigo:
@@ -82,13 +81,15 @@ class C1:
         if posicao not in self.memoria_presa:
             self.memoria_presa.append(posicao)
     def verificar_memoria_perigo(self):
-        for x,y in self.memoria_perigo:
-            self.distancia_ate(ameaca) == (
-                (x - self.x) ** 2 +
-                (y - self.y) ** 2
+        for perigo in self.memoria_perigo:
+            distancia = (
+            (perigo["x"] - self.x) ** 2 +
+            (perigo["y"] - self.y)** 2 
             ) ** 0.5
-            if self.distancia_ate(ameaca) < 50:
+            if distancia < 100:
+                self.medo += perigo["forca"] * 0.01
                 self.estado = "fugindo"
+   
     def interagir(self):
         if self.distancia_ate(ameaca) <20:
             self.vida -= 5
@@ -253,7 +254,9 @@ class C1:
         self.atualizar_agressividade()
         self.detectar_ameaca()
         print(self.memoria_presa)
+        print(self.prioridade_comida)
         print(self.memoria_perigo)
+        print(self.prioridade_fuga)
         print(self.vida)
         print(self.fome)
         print(self.medo)
